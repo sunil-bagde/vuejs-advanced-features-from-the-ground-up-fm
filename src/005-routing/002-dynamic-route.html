@@ -1,0 +1,81 @@
+<script src="../dist/vue.js"></script>
+
+<div id="app">
+    <component :is="url"></component>
+    <a href="#foo">foo</a>
+    <a href="#bar">bar</a>
+</div>
+
+<script type="module">
+    import { pathToRegexp } from "https://cdn.jsdelivr.net/npm/path-to-regexp@6.2.1/+esm";
+
+    window.addEventListener("hashchange", () => {
+        console.log("hash");
+        app.url = window.location.hash.slice(1);
+    });
+
+    const Foo = {
+        props: ["id"],
+        template: `<div>Foo {{id}}</div>`,
+    };
+    const Bar = {
+        props: ["id"],
+        template: `<div>Bar {{id}}</div>`,
+    };
+    const NotFound = {
+        template: `<div>NotFound</div>`,
+    };
+    const RouteTable = {
+        "/foo/:id": Foo,
+        "/bar/:id": Bar,
+        "/bar": Bar,
+    };
+    const compileRoutes = [];
+    Object.keys(RouteTable).forEach((path) => {
+        const dynamicSegments = [];
+        const regex = pathToRegexp(path, dynamicSegments);
+        const component = RouteTable[path];
+        compileRoutes.push({
+            component,
+            regex,
+            dynamicSegments,
+        });
+    });
+
+    console.log("compileRoutes", compileRoutes);
+    const app = new Vue({
+        el: "#app",
+        data: {
+            url: window.location.hash.slice(1),
+        },
+        render(h) {
+            const path = "/" + this.url;
+            console.log("path", path);
+            const [, url, param] = path.split("/");
+
+            let componentToRender;
+            let props = {};
+
+            compileRoutes.some((route) => {
+                const match = route.regex.exec(path);
+                console.log("match", match);
+                if (match) {
+                    componentToRender = route.component;
+                    route.dynamicSegments.forEach((segment,index) => {
+                        props[segment.name] = match[index + 1];
+                    });
+                }
+            });
+
+console.log("componentToRender", componentToRender);
+            return h("div", [
+                h(componentToRender || NotFound, { props }),
+                h("a", { attrs: { href: "#foo/123" } }, "foo"),
+                " | ",
+                h("a", { attrs: { href: "#bar" } }, "bar"),
+                " | ",
+                h("a", { attrs: { href: "#bar/234" } }, "bar"),
+            ]);
+        },
+    });
+</script>

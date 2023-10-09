@@ -1,0 +1,46 @@
+<script src="./dist/vue.js"></script>
+
+<div id="app">
+	<counter></counter>
+	<counter></counter>
+	<button @click="inc">inc</button>
+</div>
+
+<script>
+	const store = createStore({
+		state: { count: 0 },
+		mutations: {
+			inc(state) {
+				state.count++;
+			},
+		},
+	});
+
+	const Counter = {
+		render(h) {
+			return h("div", store.state.count);
+		},
+	};
+
+	new Vue({
+		el: "#app",
+		methods: {
+			inc() {
+				store.commit("inc");
+			},
+		},
+		components: {
+			Counter,
+		},
+	});
+	function createStore({ state, mutations }) {
+		return new Vue({
+			data: { state },
+			methods: {
+				commit(mutationType) {
+					mutations[mutationType](this.state);
+				},
+			},
+		});
+	}
+</script>

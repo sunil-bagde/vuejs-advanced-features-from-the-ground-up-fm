@@ -1,0 +1,36 @@
+<script src="./dist/vue.js"></script>
+
+<div id="app">
+	<counter></counter>
+	<counter></counter>
+	<button @click="inc">inc</button>
+</div>
+
+<script>
+	const state = {
+		count: 0,
+	};
+	const Counter = {
+		data() {
+			return state;
+		},
+		render(h) {
+			return h("div", this.count);
+		},
+	};
+	new Vue({
+		el: "#app",
+
+		data() {
+			return state;
+		},
+		methods: {
+			inc() {
+				this.count += 1;
+			},
+		},
+		components: {
+			Counter,
+		},
+	});
+</script>

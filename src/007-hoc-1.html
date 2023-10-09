@@ -1,0 +1,50 @@
+<script src="./dist/vue.js"></script>
+<div id="app">
+    <smart-avatar username="vuejs" id="hello">
+        <div slot="foo">This is a named slot</div>
+    </smart-avatar>
+</div>
+<script>
+    // mock API
+    function fetchURL(username, cb) {
+        setTimeout(() => {
+            // hard coded, bonus: exercise: make it fetch from gravatar!
+            cb("https://avatars3.githubusercontent.com/u/6128107?v=4&s=200");
+        }, 500);
+    }
+    const Avatar = {
+        props: ["src"],
+        template: `<img :src="src" />`,
+    };
+
+    const SmartAvatar = withAvatarUrl(Avatar, fetchURL);
+    new Vue({
+        el: "#app",
+        components: { SmartAvatar },
+    });
+
+    function withAvatarUrl(InnerComponent, fetchURL) {
+        return {
+            props: ["username"],
+            data() {
+                return {
+                    url: `https://fakeimg.pl/200x200/41b883/ffffff`,
+                };
+            },
+            created() {
+                fetchURL(this.username, url => {
+                    this.url =url
+                })
+            },
+            render(h) {
+                 console.log(this.$slots.foo);
+                 console.log(this.$attrs);
+                return h(InnerComponent, {
+                    props: {
+                        src: this.url
+                    }
+                });
+            },
+        };
+    }
+</script>

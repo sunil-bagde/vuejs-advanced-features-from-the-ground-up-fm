@@ -1,0 +1,37 @@
+<script src="../dist/vue.js"></script>
+<div id="app">
+    {{$t("hello")}}
+    <button @click="changeLang('en')">En</button>
+    <button @click="changeLang('nl')">Du</button>
+
+    <span>{{lang}}</span>
+</div>
+
+<script>
+
+    function i18Plugin(Vue, local) { 
+       Vue.prototype.$t = function(key) { 
+         return local[this.$root.lang][key]
+       }
+
+    }
+    Vue.use(i18Plugin, {
+        en: {
+            hello: "Hello",
+        },
+        nl: {
+            hello: "Hallo",
+        },
+    });
+    new Vue({
+        el: "#app",
+        data: {
+            lang: "en",
+        },
+        methods: {
+            changeLang(lang) {
+                this.lang = lang;
+            },
+        },
+    });
+</script>

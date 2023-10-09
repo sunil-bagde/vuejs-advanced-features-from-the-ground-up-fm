@@ -1,0 +1,25 @@
+<script src="./dist/vue.js"></script>
+<div id="app">
+	<counter :count="count"></counter>
+	<counter :count="count"></counter>
+	<button @click="inc">inc</button>
+</div>
+
+<script>
+	new Vue({
+		el: "#app",
+		data: { count: 0 },
+
+		methods: {
+			inc() {
+				this.count += 1;
+			},
+		},
+		components: {
+			Counter: {
+				props: ["count"],
+				template: `<div>{{count}}</div>`,
+			},
+		},
+	});
+</script>

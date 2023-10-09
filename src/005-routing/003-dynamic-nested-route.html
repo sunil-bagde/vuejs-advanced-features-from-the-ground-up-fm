@@ -1,0 +1,130 @@
+<script src="../dist/vue.js"></script>
+
+<div id="app">
+    <component :is="url"></component>
+    <a href="#foo">foo</a>
+    <a href="#bar">bar</a>
+</div>
+
+<script type="module">
+        import { pathToRegexp } from "https://cdn.jsdelivr.net/npm/path-to-regexp@6.2.1/+esm";
+
+        window.addEventListener("hashchange", () => {
+            app.url = window.location.hash.slice(1);
+        });
+
+        const Foo = {
+            props: ["id"],
+            template: `<div>Foo {{id}}</div>`,
+        };
+        const Bar = {
+            props: ["id"],
+            template: `<div>Bar {{id}}</div>`,
+        };
+        const NotFound = {
+            template: `<div>NotFound</div>`,
+        };
+        const FooChildren = {
+            template: `<div>FooChildren</div>`,
+        };
+        const BarChildren = {
+            props: ["id"],
+            template: `<div>Bar child with dynamic id: {{id}}</div>`,
+        };
+        const RouteTable = [
+            {
+                path: "/foo/:id",
+                component: Foo,
+                children: [
+                    {
+                        path: "/child",
+                        component: FooChildren,
+                    },
+                ],
+            },
+            {
+                path: "/bar/:id",
+                component: Bar,
+                 children: [
+                    {
+                        path: "/child/:id",
+                        component: BarChildren,
+                    },
+                ],
+            },
+            { path: "/bar", component: Bar },
+        ];
+        const compileRoutes = [];
+
+        Object.keys(RouteTable).forEach((key) => {
+            const { path, component, children } = RouteTable[key];
+
+            const dynamicSegments = [];
+            const cdynamicSegments = [];
+            if (children?.length > 0) {
+                children.forEach((childComponent) => {
+                    const childPath =  `${path}${childComponent.path}`
+                    const regex = pathToRegexp(childPath, cdynamicSegments);
+                    compileRoutes.push({
+                        component: childComponent.component,
+                        regex,
+                        dynamicSegments:cdynamicSegments,
+                    });
+                });
+            }
+            const regex = pathToRegexp(path, dynamicSegments);
+            compileRoutes.push({
+                component,
+                regex,
+                dynamicSegments,
+            });
+        });
+
+
+    console.log("compileRoutes", compileRoutes);
+        const app = new Vue({
+            el: "#app",
+            data: {
+                url: window.location.hash.slice(1),
+            },
+            render(h) {
+                const path = "/" + this.url;
+
+                const [, url, param] = path.split("/");
+
+                let componentToRender;
+                let props = {};
+
+                compileRoutes.some((route) => {
+                    const match = route.regex.exec(path);
+
+
+                    if (match) {
+                        console.log("match", route.dynamicSegments,match);
+                        componentToRender = route.component;
+                        route.dynamicSegments.forEach((segment, index) => {
+                            console.log("segment",
+                            segment.name,
+                             match[index + 1]
+                        );
+                            props[segment.name] = match[index + 1];
+                        });
+                    }
+                });
+
+                return h("div", [
+                    h(componentToRender || NotFound, { props }),
+                    h("a", { attrs: { href: "#foo/123" } }, "foo"),
+                    " | ",
+                    h("a", { attrs: { href: "#bar" } }, "bar"),
+                    " | ",
+                    h("a", { attrs: { href: "#bar/234" } }, "bar"),
+                     " | ",
+                        h("a", { attrs: { href: "#foo/123/child" } }, "foo child"),
+                         " | ",
+                        h("a", { attrs: { href: "#bar/123/child/453" } }, "bar child"),
+                ]);
+
+            },
+        });
+</script>
